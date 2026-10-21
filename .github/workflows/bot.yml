@@ -1,11 +1,14 @@
 name: Salamander Figure Bot
 
 on:
+  schedule:
+    - cron: '0 * * * *'
   workflow_dispatch:
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: 소스코드 내려받기
         uses: actions/checkout@v4
@@ -22,4 +25,6 @@ jobs:
           pip install -r requirements.txt
 
       - name: 피규어 수집 봇 실행하기
+        env:
+          YAHOO_APP_ID: ${{ secrets.YAHOO_APP_ID }}
         run: python figure_bot.py

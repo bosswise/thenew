@@ -1,31 +1,42 @@
-# Figure CSV importer
+# Figure listing collector
 
-The scheduled web scraper has been replaced with an explicit CSV import. The
-current AmiAmi and Good Smile pages did not provide product links to the
-collector, and this repository has no verified official product feed/API.
-This importer does not try to bypass those sites' access restrictions.
+The collector searches the official Yahoo! Shopping item-search API for figure
+listings. The current searches cover Japanese terms for figures, scale figures,
+Nendoroid, and figma. This is a first source, not a crawler for the entire
+internet; additional retailers need their own permitted API or feed adapter.
 
-## Prepare `figures.csv`
+The collector stores listing titles, seller names, prices, product URLs, image
+URLs, and optional brand/release-date values returned by the API. Prices are
+stored as returned by Yahoo! Shopping (JPY). Release dates and manufacturer
+names may be missing or reflect marketplace metadata rather than verified
+manufacturer data.
 
-Add a UTF-8 CSV file named `figures.csv` to the repository root. Only
-`title`, `shop_name`, `price`, and `shop_url` are required. The remaining
-columns may be left blank or omitted.
+## Configure Yahoo! Shopping API access
 
-```csv
-title,manufacturer,scale,release_date,image_url1,image_url2,image_url3,description,category,figure_type,shop_name,price,shop_url
-Example figure,Example Maker,1/7 scale,2026-10,https://example.com/figure.jpg,,,Example description,애니메이션,스케일/스테츄,Example Shop,15800,https://example.com/products/example
-```
+1. Sign in to a Yahoo! JAPAN account and register an application in the
+   [Yahoo! Developer Network](https://e.developer.yahoo.co.jp/shopping/register).
+2. Review and accept the current
+   [Yahoo! Shopping API documentation and usage terms](https://developer.yahoo.co.jp/webapi/shopping/v3/itemsearch.html).
+3. In the GitHub repository, open **Settings → Secrets and variables →
+   Actions → New repository secret**.
+4. Add the application ID as a secret named `YAHOO_APP_ID`. Do not paste it
+   into chat or commit it to the repository.
 
-Use a whole-number price (commas are accepted when quoted, for example
-`"15,800"`). Rows with a `shop_url` already in `figure_shops` are skipped, so
-rerunning an unchanged CSV will not import the same shop listing twice.
+Without this secret, the scheduled job fails with a clear configuration error.
 
-## Run the import
+## Run and monitor
 
-Commit `figures.csv`, then open the repository's **Actions** tab, select
-**Salamander Figure Bot**, and choose **Run workflow**. The workflow is manual
-because no supported automatic product feed has been configured. Add updated
-CSV rows and run it again when you have new listings.
+GitHub Actions runs the collector hourly and also allows a manual run from the
+**Actions → Salamander Figure Bot → Run workflow** page. The collector spaces
+API requests to stay below Yahoo's documented limit of one query per second.
+For each matching listing it adds a figure/shop record, or updates the stored
+price when that exact listing URL was already imported.
 
-Import errors are printed in the workflow log and make the run fail instead
-of reporting a false success.
+Check the Actions log for query result counts and import totals. API failures
+and runs that return no valid listings fail visibly instead of reporting a
+successful collection.
+
+The API response contains image URLs; this collector stores those URLs rather
+than downloading or copying image files. Follow Yahoo's current API terms when
+displaying or retaining product data. This source covers Yahoo! Shopping
+listings only; it does not provide comprehensive worldwide inventory.
