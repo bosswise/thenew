@@ -1,42 +1,50 @@
 # Figure listing collector
 
-The collector searches the official Yahoo! Shopping item-search API for figure
-listings. The current searches cover Japanese terms for figures, scale figures,
-Nendoroid, and figma. This is a first source, not a crawler for the entire
-internet; additional retailers need their own permitted API or feed adapter.
+The collector searches the eBay Browse API for fixed-price listings matching
+anime figure, scale figure, Nendoroid, and figma searches. It is a first
+international marketplace source, not a crawler for the entire internet.
+Additional retailers require their own permitted API or feed integration.
 
-The collector stores listing titles, seller names, prices, product URLs, image
-URLs, and optional brand/release-date values returned by the API. Prices are
-stored as returned by Yahoo! Shopping (JPY). Release dates and manufacturer
-names may be missing or reflect marketplace metadata rather than verified
-manufacturer data.
+For each valid listing, the collector stores the listing title, seller, price,
+ISO currency, product URL, and eBay-provided image URL. The workflow searches
+the `EBAY_US` marketplace by default, so prices may be in USD or another
+currency returned by eBay. Manufacturer and release-date values are not
+provided by this search and remain unknown.
 
-## Configure Yahoo! Shopping API access
+## Configure eBay API access
 
-1. Sign in to a Yahoo! JAPAN account and register an application in the
-   [Yahoo! Developer Network](https://e.developer.yahoo.co.jp/shopping/register).
-2. Review and accept the current
-   [Yahoo! Shopping API documentation and usage terms](https://developer.yahoo.co.jp/webapi/shopping/v3/itemsearch.html).
+1. Register or sign in at the [eBay Developer Program](https://developer.ebay.com/).
+2. Create an application and obtain its **Production** App ID (Client ID) and
+   Cert ID (Client Secret). Review eBay's current Browse API and API license
+   requirements before using the data.
 3. In the GitHub repository, open **Settings → Secrets and variables →
    Actions → New repository secret**.
-4. Add the application ID as a secret named `YAHOO_APP_ID`. Do not paste it
-   into chat or commit it to the repository.
+4. Add these repository secrets:
+   - `EBAY_CLIENT_ID` — Production App ID (Client ID)
+   - `EBAY_CLIENT_SECRET` — Production Cert ID (Client Secret)
+5. In the Supabase SQL editor, run the migration in
+   [`supabase/migrations/20261022000000_add_price_currency.sql`](./supabase/migrations/20261022000000_add_price_currency.sql).
+   This adds an ISO currency column so USD and other returned currencies are
+   not displayed as unlabelled amounts.
 
-Without this secret, the scheduled job fails with a clear configuration error.
+Never put the Client Secret in source code, CSV files, or chat. The collector
+uses the OAuth client-credentials flow and does not require an eBay buyer
+account login.
 
 ## Run and monitor
 
-GitHub Actions runs the collector hourly and also allows a manual run from the
-**Actions → Salamander Figure Bot → Run workflow** page. The collector spaces
-API requests to stay below Yahoo's documented limit of one query per second.
-For each matching listing it adds a figure/shop record, or updates the stored
-price when that exact listing URL was already imported.
+GitHub Actions runs the collector hourly and also allows manual runs from
+**Actions → Salamander Figure Bot → Run workflow**. It searches the `EBAY_US`
+marketplace; the workflow can be changed to another eBay marketplace ID when
+needed.
 
-Check the Actions log for query result counts and import totals. API failures
-and runs that return no valid listings fail visibly instead of reporting a
-successful collection.
+The collector spaces search requests to avoid sending them in a burst. It
+inserts new listings and updates the price and currency of listings with a
+matching item URL. Check the Actions log for query result counts and import
+totals. Missing credentials, API errors, and runs with no valid listings fail
+visibly instead of reporting a successful collection.
 
-The API response contains image URLs; this collector stores those URLs rather
-than downloading or copying image files. Follow Yahoo's current API terms when
-displaying or retaining product data. This source covers Yahoo! Shopping
-listings only; it does not provide comprehensive worldwide inventory.
+The collector stores eBay's image URL and does not download image files.
+Follow eBay's current API terms for displaying and retaining product data.
+Search results are limited to eBay and are not a complete view of all
+worldwide figure products.

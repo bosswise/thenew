@@ -26,5 +26,7 @@ jobs:
 
       - name: 피규어 수집 봇 실행하기
         env:
-          YAHOO_APP_ID: ${{ secrets.YAHOO_APP_ID }}
+          EBAY_CLIENT_ID: ${{ secrets.EBAY_CLIENT_ID }}
+          EBAY_CLIENT_SECRET: ${{ secrets.EBAY_CLIENT_SECRET }}
+          EBAY_MARKETPLACE_ID: EBAY_US
         run: python figure_bot.py
